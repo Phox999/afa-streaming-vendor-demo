@@ -67,7 +67,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:flex-
 .claim-support-link img{display:block;width:13px;height:13px;flex:none;}
 .send-button.is-paused{position:relative;opacity:.5;}
 .send-button.is-paused img{opacity:0;}
-/* Input/MessageBar Status=pause（Figma 21477:5109）：思考中到回覆完成、以及需先點上方按鈕時使用。 */
+/* 輸入列停用態：思考中到回覆完成、以及需先點上方按鈕時使用。 */
 .send-button.is-paused::before{content:"";position:absolute;inset:0;border-radius:50%;background:url(assets/send-pause-bg.svg) center/40px 40px no-repeat;}
 .send-button.is-paused::after{content:"";position:absolute;z-index:1;width:12px;height:12px;border-radius:2px;background:#3a3a3a;}
 .claim-support-link:hover{text-decoration:underline;}
@@ -79,7 +79,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:flex-
 .reveal-blur{animation:reveal-blur var(--reveal-blur-ms,560ms) ease-out both;}
 @keyframes reveal-fade{from{opacity:0}to{opacity:1}}
 @keyframes reveal-blur{from{opacity:0;filter:blur(6px);transform:translateY(4px)}to{opacity:1;filter:blur(0);transform:none}}
-/* 新情境測試（查帳單）：依 Figma【Next-Chatbot】Library「APP_查帳單_已入帳明細_未繳款_未設定自扣」。 */
+/* 查帳單情境 */
 .brand-chevron{display:block;flex:none;width:24px;height:24px;}
 .brand-chevron[hidden],.beta[hidden]{display:none;}
 .assistant-content.bill-reply{gap:16px;}
@@ -235,7 +235,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:flex-
     2:{scenario:'flight',errorStyle:'blurAll',flowStream:true},
     3:{scenario:'bill',errorStyle:'blurAll',flowStream:true}
   };
-  // 新情境測試（查帳單）：文案與數字取自 Figma 設計稿範例，僅供展示。
+  // 查帳單情境：文案與數字皆為展示用範例。
   const BILL = {
     user:'幫我查帳單',
     sentAt:'10:07 PM',
@@ -388,7 +388,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:flex-
   }
   function loading() {
     const row=el('div','message-loading');
-    row.dataset.component='Message/Loading';row.dataset.nodeId='32124:25069';
+    row.dataset.component='Message/Loading';
     const content=el('div','message-loading-content'),bubble=el('div','message-loading-bubble');
     const spark=el('span','message-loading-spark-spin');spark.setAttribute('aria-hidden','true');
     const sparkImage=el('img','message-loading-spark');sparkImage.src='assets/loading-star.svg';sparkImage.alt='';

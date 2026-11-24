@@ -1986,7 +1986,7 @@ a.inline-link { text-decoration: underline; }
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
 
-/* Login password screen: match the Figma bottom-sheet geometry. */
+/* Login password screen: match the bottom-sheet geometry. */
 #auth-sheet[data-view^="login-"] .auth-tabs {
   height: 59px;
   align-items: flex-end;
