@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>阿發｜接續流程 Streaming 比較</title>
+<link rel="stylesheet" href="app.css">
+<style>
+/* Minimal comparison controls; original Afa components retain dist/app.css. */
+html,body{min-width:320px;min-height:100%;}
+body{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;padding:18px 12px 28px;background:#f6f6f8;}
+.demo-layout{display:flex;width:min(680px,100%);align-items:flex-start;justify-content:center;gap:20px;}
+.delay-panel{width:188px;flex:none;margin-top:115px;padding:14px 13px;border:1px solid #e7e6ef;border-radius:12px;background:rgb(255 255 255 / 92%);box-shadow:0 2px 9px rgb(27 31 68 / 6%);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC",sans-serif;}
+.delay-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px;color:#3a3a3a;font-size:12px;line-height:18px;}
+.delay-panel-heading > span{font-weight:500;}
+.delay-panel-value{flex:none;color:#4f44c3;font-size:13px;font-weight:600;white-space:nowrap;}
+.delay-group + .delay-group{margin-top:14px;padding-top:12px;border-top:1px solid #efeef5;}
+.delay-group-hint{display:block;margin-top:1px;color:#8a8a99;font-size:11px;font-weight:400;line-height:15px;}
+.delay-options{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%;margin-top:8px;}
+.flow-stream-heading{margin-top:12px;}
+.delay-options.flow-stream-options{grid-template-columns:repeat(2,1fr);}
+.delay-option{appearance:none;min-width:0;min-height:44px;padding:8px 4px;border:1px solid #dddde9;border-radius:999px;background:#fff;color:#555;font-family:inherit;font-size:12px;line-height:18px;white-space:nowrap;cursor:pointer;touch-action:manipulation;}
+.delay-option[aria-pressed=true]{border-color:#4f44c3;background:#f5f3ff;color:#4f44c3;font-weight:600;box-shadow:inset 0 0 0 1px #4f44c3;}
+.delay-option:focus-visible{outline:2px solid #4f44c3;outline-offset:2px;}
+.delay-confirm{appearance:none;width:100%;min-height:44px;margin-top:8px;padding:8px 12px;border:0;border-radius:999px;background:#4f44c3;color:#fff;font-family:inherit;font-size:13px;font-weight:600;line-height:18px;cursor:pointer;touch-action:manipulation;}
+.delay-confirm:focus-visible{outline:2px solid #4f44c3;outline-offset:2px;}
+.error-group{margin-top:14px;padding-top:12px;border-top:1px solid #efeef5;}
+.error-group + .delay-confirm{margin-top:14px;}
+.phone-demo{position:relative;display:flex;width:min(393px,100%);flex:none;flex-direction:column;gap:12px;}
+.compare-bar{width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;align-items:stretch;font-family:-apple-system,BlinkMacSystemFont,"PingFang TC",sans-serif;}
+.compare-choice{min-width:0;padding:10px 8px;border:1px solid #dddde9;border-radius:11px;background:#fff;color:#3a3a3a;text-align:center;cursor:pointer;font-size:12px;line-height:18px;}
+.compare-choice small{display:block;margin-top:1px;font-size:10px;font-weight:400;line-height:14px;opacity:.75;white-space:nowrap;}
+.compare-choice[aria-pressed=true]{border-color:#4f44c3;background:#f5f3ff;color:#4f44c3;font-weight:600;box-shadow:inset 0 0 0 1px #4f44c3;}
+.compare-replay{min-width:0;padding:0 8px;border:1px solid #dddde9;border-radius:11px;background:white;color:#4f44c3;font-size:13px;cursor:pointer;}
+.compare-status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
+.compare-status strong{color:#4f44c3;font-weight:500;}
+.app{max-width:100%;}
+/* The Safari mockup leaves the phone's lower safe area visible; tint it to match the supplied reference instead of exposing a flat white strip. */
+.app{background:linear-gradient(180deg,#fff 0%,#fff 78%,#f4f6f9 100%);}
+/* Keep the last streamed reply above the original composer overlay. */
+.chat-screen{padding-bottom:56px;}
+.chat-scroll-spacer{display:block;flex:none;width:1px;pointer-events:none;}
+.chat-scroll-latest{position:absolute;z-index:3;bottom:218px;left:50%;display:flex;width:45px;height:45px;align-items:center;justify-content:center;transform:translateX(-50%);border:0;border-radius:50%;background:#fff;box-shadow:0 2px 12px rgb(27 31 68 / 16%);cursor:pointer;touch-action:manipulation;}
+.chat-scroll-latest[hidden]{display:none;}
+.chat-scroll-latest img{display:block;width:24px;height:24px;filter:invert(28%) sepia(41%) saturate(1811%) hue-rotate(212deg) brightness(92%) contrast(91%);}
+.claim-details-bubble li.stream-item-pending{display:none;}
+/* Keep the assistant send time on one line beneath its card. */
+.assistant-content .chat-meta{width:max-content;min-width:max-content;}
+.assistant-content .chat-meta .chat-time{width:auto;white-space:nowrap;}
+.message-loading{display:flex;gap:8px;align-items:flex-start;padding:0 16px;flex:none;}
+.message-loading-content{display:flex;flex:1;max-width:305px;min-width:0;align-items:flex-start;padding:0;}
+.message-loading-bubble{display:flex;width:max-content;max-width:100%;min-height:48px;align-items:center;justify-content:center;gap:10px;padding:12px 16px;border:1px solid rgb(224 224 224 / 8%);border-radius:10px;background:linear-gradient(133.77deg,#fff 8.1421%,rgb(255 255 255 / 50%) 95.691%);box-shadow:0 2px 9px rgb(27 31 68 / 8%);-webkit-backdrop-filter:blur(27.5px);backdrop-filter:blur(27.5px);font-size:16px;font-weight:400;line-height:22px;letter-spacing:.3px;white-space:nowrap;transition:opacity var(--loading-fade-duration,100ms) ease-in-out;}
+.message-loading-bubble.loading-fade-out{opacity:0;}
+.message-loading-spark-spin{display:block;flex:none;width:20px;height:20px;animation:loading-spark-rotate 2s linear infinite;}
+.message-loading-spark{display:block;width:100%;height:100%;transform-origin:center;animation:loading-spark-pulse 2s ease-in-out infinite;}
+.message-loading-label{opacity:.58;animation:thinking-breathe 1s ease-in-out infinite;}
+@keyframes thinking-breathe{0%,100%{opacity:.58}50%{opacity:1}}
+@keyframes loading-spark-rotate{to{transform:rotate(360deg)}}
+@keyframes loading-spark-pulse{0%,100%{transform:scale(.84)}50%{transform:scale(1.14)}}
+.chat-actions{width:max-content;max-width:100%;align-items:flex-start;}
+.chat-actions > button.chat-action.afa-figma-button{appearance:none;width:max-content;max-width:100%;min-height:38px;padding:8px 24px;border:1px solid rgb(224 224 224 / 35%);border-radius:22px;color:#4f44c3;background:linear-gradient(133.77deg,#fff 8.1421%,rgb(255 255 255 / 75%) 95.691%);box-shadow:0 2px 9px rgb(27 31 68 / 8%);-webkit-backdrop-filter:blur(27.5px);backdrop-filter:blur(27.5px);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC",sans-serif;font-size:16px;line-height:22px;letter-spacing:.3px;text-align:center;}
+.chat-actions > button.chat-action.afa-figma-button:hover{color:#4f44c3;background:linear-gradient(133.77deg,#fff 8.1421%,rgb(255 255 255 / 88%) 95.691%);}
+.chat-actions.figma-quick-replies{display:flex;flex-flow:row nowrap;align-items:center;gap:8px;width:100%;margin-top:10px;padding-left:0;}
+.chat-actions.figma-quick-replies > button.chat-action.afa-figma-button{width:auto;min-width:0;min-height:38px;padding:7px 16px;border:0;color:#454545;background:linear-gradient(133.77deg,#fff 8.1421%,rgb(255 255 255 / 72%) 95.691%);box-shadow:0 2px 9px rgb(27 31 68 / 8%);white-space:nowrap;}
+.claim-contact-line{display:block;white-space:nowrap;}
+.claim-support-link{display:inline-flex;align-items:center;gap:3px;color:#1688e8;text-decoration:none;white-space:nowrap;}
+.claim-support-link img{display:block;width:13px;height:13px;flex:none;}
+.send-button.is-paused{position:relative;opacity:.5;}
+.send-button.is-paused img{opacity:0;}
+/* Input/MessageBar Status=pause（Figma 21477:5109）：思考中到回覆完成、以及需先點上方按鈕時使用。 */
+.send-button.is-paused::before{content:"";position:absolute;inset:0;border-radius:50%;background:url(assets/send-pause-bg.svg) center/40px 40px no-repeat;}
+.send-button.is-paused::after{content:"";position:absolute;z-index:1;width:12px;height:12px;border-radius:2px;background:#3a3a3a;}
+.claim-support-link:hover{text-decoration:underline;}
+.stream-caret{display:inline-block;width:2px;height:16px;background:#4f44c3;vertical-align:-3px;margin-left:2px;animation:blink .8s step-end infinite;}
+@keyframes blink{50%{opacity:0;}}
+/* E/F/G reveal modes. Blocks not yet revealed are removed from layout so the reply grows downward. */
+.reveal-pending{display:none !important;}
+.reveal-fade{animation:reveal-fade var(--reveal-fade-ms,360ms) ease-out both;}
+.reveal-blur{animation:reveal-blur var(--reveal-blur-ms,560ms) ease-out both;}
+@keyframes reveal-fade{from{opacity:0}to{opacity:1}}
+@keyframes reveal-blur{from{opacity:0;filter:blur(6px);transform:translateY(4px)}to{opacity:1;filter:blur(0);transform:none}}
+/* 新情境測試（查帳單）：依 Figma【Next-Chatbot】Library「APP_查帳單_已入帳明細_未繳款_未設定自扣」。 */
+.brand-chevron{display:block;flex:none;width:24px;height:24px;}
+.brand-chevron[hidden],.beta[hidden]{display:none;}
+.assistant-content.bill-reply{gap:16px;}
+.bill-card{width:305px;max-width:100%;overflow:hidden;border-radius:12px;background:#fff;box-shadow:0 2px 9px rgb(27 31 68 / 8%);color:#3a3a3a;}
+.bill-statement{display:flex;flex-direction:column;gap:12px;padding:16px;}
+.bill-total{display:flex;flex-direction:column;gap:2px;text-align:center;}
+.bill-total-label{margin:0;font-size:14px;font-weight:500;line-height:20px;letter-spacing:.042px;}
+.bill-total-amount{margin:0;font-size:20px;font-weight:600;line-height:24px;letter-spacing:.3px;}
+.bill-row{display:flex;justify-content:space-between;gap:8px;margin:0;font-size:14px;line-height:20px;letter-spacing:.3px;}
+.bill-row.is-strong{font-weight:500;letter-spacing:.042px;}
+.bill-row span:last-child{text-align:right;}
+.bill-note{margin:0 16px 12px;color:#4f44c3;font-size:12px;}
+.bill-link{color:#009eff;font-weight:500;text-decoration:none;}
+.bill-link:hover{text-decoration:underline;}
+.bill-meta{display:flex;width:299px;max-width:100%;height:24px;align-items:center;justify-content:space-between;margin-top:-8px;}
+.bill-meta .chat-time{margin:0;white-space:nowrap;}
+.bill-feedback{display:flex;gap:12px;}
+.bill-feedback button{appearance:none;width:24px;height:24px;padding:0;border:0;border-radius:4px;background:none;cursor:pointer;}
+.bill-feedback button[aria-pressed=true]{background:#f0eeff;}
+.bill-feedback img{display:block;width:24px;height:24px;}
+.bill-suggest{display:flex;flex-direction:column;gap:12px;}
+.bill-suggest-heading{display:flex;align-items:center;gap:4px;margin:0;color:#777;font-size:14px;line-height:20px;letter-spacing:.3px;}
+.bill-suggest-star{display:flex;width:15px;height:15px;align-items:center;justify-content:center;flex:none;}
+.bill-suggest-q{appearance:none;display:flex;align-items:center;gap:8px;padding:2px 0;border:0;background:none;color:#3a3a3a;font-family:inherit;font-size:16px;line-height:22px;letter-spacing:.3px;text-align:left;cursor:pointer;}
+.bill-suggest-q img{display:block;width:24px;height:24px;flex:none;}
+@media(max-width:700px){.demo-layout{width:min(393px,100%);flex-direction:column;align-items:stretch;gap:8px}.delay-panel{width:100%;margin:0;padding:10px 12px}.delay-panel-heading{margin-bottom:5px}.delay-options{grid-template-columns:repeat(5,1fr)}.delay-group + .delay-group{margin-top:10px;padding-top:10px}}
+@media(max-width:440px){body{padding:10px 0 22px;gap:8px}.compare-bar,.compare-status{width:calc(100% - 18px)}.app{border-radius:0}.compare-choice{padding:10px 4px;font-size:11px}}
+@media(prefers-reduced-motion:reduce){.stream-caret,.message-loading-label,.message-loading-spark-spin,.message-loading-spark,.reveal-fade,.reveal-blur{animation:none;}.message-loading-bubble{transition:none;}}
+</style>
+</head>
+<body>
+<div class="demo-layout">
+<aside class="delay-panel" aria-label="回覆等待時間設定">
+  <div class="delay-group" data-wait-group="consult">
+    <div class="delay-panel-heading"><span>諮詢等待<small class="delay-group-hint">一問一答</small></span><output class="delay-panel-value" data-wait-value="consult" aria-live="polite">3 秒</output></div>
+    <div class="delay-options" role="group" aria-label="諮詢等待秒數">
+      <button type="button" class="delay-option" data-wait-kind="consult" data-wait-index="0" aria-pressed="true">3 秒</button>
+      <button type="button" class="delay-option" data-wait-kind="consult" data-wait-index="1" aria-pressed="false">5 秒</button>
+      <button type="button" class="delay-option" data-wait-kind="consult" data-wait-index="2" aria-pressed="false">10 秒</button>
+    </div>
+  </div>
+  <div class="delay-group" data-wait-group="flow">
+    <div class="delay-panel-heading"><span>流程等待<small class="delay-group-hint">一問多則：訊息＋卡片</small></span><output class="delay-panel-value" data-wait-value="flow" aria-live="polite">1 秒</output></div>
+    <div class="delay-options" role="group" aria-label="流程等待秒數">
+      <button type="button" class="delay-option" data-wait-kind="flow" data-wait-index="0" aria-pressed="true">1 秒</button>
+      <button type="button" class="delay-option" data-wait-kind="flow" data-wait-index="1" aria-pressed="false">5 秒</button>
+      <button type="button" class="delay-option" data-wait-kind="flow" data-wait-index="2" aria-pressed="false">10 秒</button>
+    </div>
+  </div>
+  <div class="error-group">
+    <div class="delay-panel-heading"><span>下一則訊息 Error<small class="delay-group-hint">立即套用；選「是」時每則回覆都會 Error</small></span></div>
+    <div class="delay-options flow-stream-options" role="group" aria-label="下一則訊息是否 Error">
+      <button type="button" class="delay-option" data-error-next="off" aria-pressed="true">否</button>
+      <button type="button" class="delay-option" data-error-next="on" aria-pressed="false">是</button>
+    </div>
+  </div>
+  <button type="button" class="delay-confirm" id="confirm-wait">確認</button>
+</aside>
+<div class="phone-demo">
+<div class="compare-bar" aria-label="選擇預設樣式">
+<button type="button" class="compare-choice" data-preset="1" aria-pressed="false" title="班機延誤劇本｜Error 後以逐詞淡入重新呈現">Streaming 示範 1<small>Error：逐詞淡入</small></button>
+<button type="button" class="compare-choice" data-preset="2" aria-pressed="true" title="班機延誤劇本｜Error 後整則模糊轉清晰">Streaming 示範 2<small>Error：整則模糊</small></button>
+<button type="button" class="compare-choice" data-preset="3" aria-pressed="false" title="查帳單劇本｜Error 後整則模糊轉清晰">複雜情境演示<small>查帳單</small></button>
+<button type="button" class="compare-replay" id="replay" aria-label="重新播放">↻ 重播</button>
+</div>
+<div class="compare-status" role="status" aria-live="polite"><span>iPhone 393 × 852</span><strong id="status">準備開始</strong></div>
+<main class="app is-chat" aria-label="國泰產險智能助理阿發">
+  <div class="system-glow" aria-hidden="true"><img src="assets/system-bg.svg" alt=""></div>
+  <div class="phone-chrome" aria-hidden="true"><img src="assets/ios-safari-chrome.svg" alt=""></div>
+  <header class="top"><div class="brand-row"><p class="brand-name">國泰產險智能助理阿發</p><span class="beta">Beta</span><img class="brand-chevron" src="assets/bill-arrow-black.svg" alt="" hidden></div></header>
+  <section class="chat-screen" id="chat-screen" aria-label="班機延誤諮詢對話" aria-live="polite"></section>
+  <button type="button" class="chat-scroll-latest" id="scroll-latest" aria-label="捲動至最新訊息" title="捲動至最新訊息" hidden><img src="assets/Direction=down.svg" alt=""></button>
+  <footer class="composer">
+    <form class="composer-form">
+      <div class="message-field"><img class="field-art" src="assets/input-field.svg" alt=""><input class="message-input" type="text" placeholder="告訴我你想做什麼" disabled aria-label="告訴我你想做什麼"></div>
+      <button class="send-button" type="submit" aria-label="傳送" disabled><img src="assets/send.svg" alt=""></button>
+    </form>
+    <p class="message-note">當您傳送訊息，即表示同意「AI告知聲明」。本服務由AI提供，<br>內容僅供參考，實際資訊仍以國泰產險官網公告為準。</p>
+  </footer>
+</main>
+</div>
+</div>
+<script>
+(() => {
+  'use strict';
+  const $ = sel => document.querySelector(sel);
+  const chat = $('#chat-screen');
+  const scrollLatest = $('#scroll-latest');
+  const status = $('#status');
+  const waitValues = {consult:$('[data-wait-value="consult"]'),flow:$('[data-wait-value="flow"]')};
+  const waitButtons = Array.from(document.querySelectorAll('[data-wait-index]'));
+  const confirmWaitButton = $('#confirm-wait');
+  const composerForm = $('.composer-form');
+  const messageInput = $('.message-input');
+  const sendButton = $('.send-button');
+  const presetButtons = Array.from(document.querySelectorAll('[data-preset]'));
+  const errorNextButtons = Array.from(document.querySelectorAll('[data-error-next]'));
+  // 廠商展示版：面板沒有 Error 樣式與流程 Streaming，兩者由上方按鈕決定；按鈕顯示最後選的那一個。
+  let activePreset = '2';
+  const APPLICATION_MESSAGE = '我要申請';
+  const BANK_ACCOUNT_QUESTION = '本人匯款帳戶有什麼要求';
+  const FIRST_CONSULTATION = {
+    user: '我想詢問班機延誤相關問題',
+    sentAt: '10:07 PM',
+    answer: '阿發為你整理常見問題：\n1. 班機延誤多久可以申請理賠？延誤 4 小時以上，才可提出理賠申請。\n2. 班機取消可以走這個流程嗎？本流程不適用，請改由產險官網或線下通路辦理。\n3. 改搭其他班機可以走這個流程嗎？本流程不適用，請改由產險官網或線下通路辦理。\n4. 錯過轉機可以走這個流程嗎？本流程不適用，請改由產險官網或線下通路辦理。\n5. 申請前需要準備什麼？登機證、本人匯款帳戶；班機延誤證明視情況提供。\n6. 申請人與申請期限有哪些條件？限個人件，且要保人與被保險人須為同一人，並於班機延誤發生後二年內提出。\n7. 申請前需要是國泰產險會員嗎？需要，實際資格與理賠內容仍依投保方案、保單條款及官網公告為準。'
+  };
+  const FOLLOWUP_CONSULTATION = {
+    user: '班機延誤 2 個半小時，可以申請理賠嗎？',
+    sentAt: '10:10 PM',
+    answer: '以國泰產險旅遊不便險的班機延誤定額保障為例，須延誤 4 小時以上才符合時間門檻；單純延誤 2 個半小時，依這項保障條件尚未達門檻。同一事故的延誤、取消或轉機失接期間可能合併計算，所以仍要依保單條款、實際航班狀況與相關證明判定。建議先核對投保方案，並保留登機證及航班異動或延誤證明；不同方案的條件可能不同，最終仍以保單條款與產險官網公告為準。'
+  };
+  const FOURTH_USER_PROMPT = '我想確認同一事故的延誤時間怎麼計算';
+  const FOURTH_ASSISTANT_ANSWER = '班機延誤、取消或轉機失接若屬同一事故，相關期間可能合併計算。建議先確認每一段航班的預定與實際起飛時間，再依投保方案及保單條款核對。';
+  const FIFTH_ANSWERS = {
+    '查理賠條件': {
+      answer: '以國泰產險旅遊不便險的班機延誤定額保障為例，延誤須達 4 小時以上；若合併計算後仍未達門檻，依這項保障條件尚不符合申請資格。實際保障仍以您的投保方案及保單條款為準。如需進一步確認，歡迎聯繫國泰產險客服。',
+      phone: '02-2755-1299',
+      landline: '0800-212-880'
+    },
+    '查國泰產險營業據點': {
+      answer: '可至國泰產險官方網站查詢各營業據點地址與服務資訊。前往前建議先確認據點的營業時間及可辦理項目。'
+    }
+  };
+  const BANK_ACCOUNT_ANSWER = '匯款帳戶請使用申請人本人名義，送出前確認帳戶資料正確；實際受理方式依申請頁面及投保方案為準。';
+  const FADE_CHAR_MS = 20; // F 逐詞淡入：每字 20ms
+  const FLOW_PREVIEW_PAUSE_MS = 1200;
+  const WAIT_OPTIONS = {consult:[3,5,10],flow:[1,5,10]};
+  const LOADING_ANIMATION_MS = 20000;
+  // 回覆類型：consult＝諮詢（一問一答，只回一則訊息）；flow＝流程（一問多則，例如訊息＋卡片）。
+  const WAIT_KIND_LABEL = {consult:'諮詢',flow:'流程'};
+  const DEFAULT_WAIT_INDEX = {consult:0,flow:0}; // 諮詢預設 3 秒、流程預設 1 秒
+  const selectedWaitIndex = {...DEFAULT_WAIT_INDEX};
+  const activeWaitIndex = {...DEFAULT_WAIT_INDEX};
+  // F／G 揭示節奏。
+  const BLUR_GAP_MS = 400;      // G：每段開始淡入的間隔
+  const FADE_IN_MS = 360;       // F：每個詞的淡入時間（同步寫在 CSS --reveal-fade-ms）
+  const BLUR_IN_MS = 560;       // G：模糊轉清晰時間（同步寫在 CSS --reveal-blur-ms）
+  const MODE_REPLY_LABEL = {fade:'逐詞淡入',blur:'區塊模糊轉清晰'};
+  // 下一則訊息 Error：為「是」時，每則阿發回覆先以 F 逐詞淡入，出現到一半時整則收回、回到思考中，
+  // 再以所選 Error 樣式給出完整回覆。不會自動改回「否」。
+  // 呈現樣式（style）：fade＝F 逐詞淡入；blur＝G 逐段模糊轉清晰；instant＝H 直接呈現；blurAll＝I 整則一起模糊轉清晰。
+  const STYLE_LABEL = {fade:'F 逐詞淡入',blur:'G 逐段模糊',instant:'H 直接呈現',blurAll:'I 整則模糊'};
+  let errorNext = false; // 廠商展示版預設「否」；完全手動，上方按鈕、重播、確認都不會改
+  let errorStyle = 'blurAll'; // 預設 I 整則模糊
+  // 流程 Streaming：只影響流程回合牌卡前的泡泡文字。true＝逐字吐出（F）；false＝直接吐出。牌卡一律整張出現。
+  // 為 false 時 Error 的前半段也是直接吐出泡泡文字（牌卡出現前收回）。
+  let flowStream = true;
+  const ERROR_DIRECT_HOLD_MS = 1000; // 泡泡文字直接吐出時，停留多久後收回
+  // 上方預設樣式；時間都是諮詢 3 秒、流程 1 秒（WAIT_OPTIONS 的第 0 個）。
+  // scenario：flight＝班機延誤理賠劇本；bill＝新情境測試（查帳單）。
+  const PRESETS = {
+    1:{scenario:'flight',errorStyle:'fade',flowStream:true},
+    2:{scenario:'flight',errorStyle:'blurAll',flowStream:true},
+    3:{scenario:'bill',errorStyle:'blurAll',flowStream:true}
+  };
+  // 新情境測試（查帳單）：文案與數字取自 Figma 設計稿範例，僅供展示。
+  const BILL = {
+    user:'幫我查帳單',
+    sentAt:'10:07 PM',
+    intro:'好的，阿發幫你查好了！以下是你 5 月的信用卡帳單明細。',
+    totalLabel:'應繳總金額 (TWD)',
+    total:'$ 24,555',
+    rows:[['繳款截止日','2026/06/02',true],['本期帳單未付金額','$ 24,555'],['最低應繳金額','$ 2,555'],['帳單結帳日','2026/05/17']],
+    reminder:'阿發發現你這期帳單尚未繳費喔！提醒你，若繳款日遇到假日，將順延至下一個工作天喔！\n\n立即前往：',
+    linkLabel:'信用卡繳費',
+    suggestions:['我想查看這期帳單資訊','對明細有疑慮，我想申請爭議帳款']
+  };
+  const SCENARIOS = {
+    flight:{title:'國泰產險智能助理阿發',beta:true,chat:'班機延誤諮詢對話',note:['當您傳送訊息，即表示同意「AI告知聲明」。本服務由AI提供，','內容僅供參考，實際資訊仍以國泰產險官網公告為準。']},
+    bill:{title:'升級版國泰世華智能助理阿發',beta:false,chat:'查帳單對話',note:['當您傳送訊息，即表示同意「AI告知聲明」。本服務由AI提供，','內容僅供參考，實際資訊仍以本行官網公告為準。']}
+  };
+  let scenario = 'flight';
+  const wordSegmenter = typeof Intl!=='undefined'&&Intl.Segmenter?new Intl.Segmenter('zh-Hant',{granularity:'word'}):null;
+  const LOADING_TEXTS = ['思考中','分析你的需求','查找相關資訊','確認資訊內容','彙整解答重點','整理回覆中，請稍候'];
+  let mode = 'fade';
+  let generation = 0;
+  let timers = [];
+  let pendingSend = null;
+  let followLatest = false;
+  let scrollAnchor = null;
+  let scrollSpacer = null;
+  let programmaticScroll = false;
+  let programmaticScrollTimer = null;
+  // token：重播時整輪作廢（gen 不同）；Error 收回時只作廢該則回覆的子 token（dead）。
+  function alive(token) { return token.parent?!token.dead&&alive(token.parent):token.gen===generation; }
+  function el(tag, cls, text) {
+    const node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+  function updateScrollButton() {
+    const distanceToBottom=latestScrollTop()-chat.scrollTop;
+    scrollLatest.hidden=distanceToBottom<=40;
+  }
+  function ensureScrollSpacer() {
+    if(!scrollSpacer||!scrollSpacer.isConnected){scrollSpacer=el('div','chat-scroll-spacer');scrollSpacer.setAttribute('aria-hidden','true');}
+    scrollSpacer.style.height=`${chat.clientHeight}px`;
+    if(chat.lastElementChild!==scrollSpacer)chat.append(scrollSpacer);
+  }
+  function latestScrollTop() {
+    const spacerHeight=scrollSpacer?.isConnected?scrollSpacer.offsetHeight:0;
+    return Math.max(0,chat.scrollHeight-chat.clientHeight-spacerHeight);
+  }
+  function scroll() {
+    requestAnimationFrame(()=>{
+      ensureScrollSpacer();
+      if(followLatest)chat.scrollTop=latestScrollTop();
+      updateScrollButton();
+    });
+  }
+  function getWaitMs(kind) { return WAIT_OPTIONS[kind][activeWaitIndex[kind]] * 1000; }
+  function formatWait(ms) { return `${Math.round(ms / 1000)} 秒`; }
+  function updateWaitValue() {
+    Object.keys(waitValues).forEach(kind=>{
+      waitValues[kind].value = `${WAIT_OPTIONS[kind][selectedWaitIndex[kind]]} 秒`;
+      waitValues[kind].textContent = waitValues[kind].value;
+    });
+    waitButtons.forEach(button=>button.setAttribute('aria-pressed',String(Number(button.dataset.waitIndex)===selectedWaitIndex[button.dataset.waitKind])));
+    syncPresetButtons();
+  }
+  function setErrorNext(on) {
+    errorNext=on;
+    errorNextButtons.forEach(button=>button.setAttribute('aria-pressed',String((button.dataset.errorNext==='on')===on)));
+    syncPresetButtons();
+  }
+  function syncPresetButtons() {
+    presetButtons.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.preset===activePreset)));
+  }
+  // 切換劇本：標題列、Beta／下拉箭頭、底部聲明跟著換。
+  function setScenario(id) {
+    scenario=id;const s=SCENARIOS[id];
+    $('.brand-name').textContent=s.title;
+    $('.beta').hidden=!s.beta;$('.brand-chevron').hidden=s.beta;
+    $('.app').setAttribute('aria-label',s.title);chat.setAttribute('aria-label',s.chat);
+    $('.message-note').replaceChildren(s.note[0],el('br'),s.note[1]);
+  }
+  function applyPreset(id) {
+    const p=PRESETS[id];activePreset=id;
+    selectedWaitIndex.consult=selectedWaitIndex.flow=0;Object.assign(activeWaitIndex,selectedWaitIndex);
+    setScenario(p.scenario);updateWaitValue();
+    errorStyle=p.errorStyle;flowStream=p.flowStream;
+    start();
+  }
+  function setComposerEnabled(enabled) {
+    messageInput.disabled = !enabled;
+    sendButton.disabled = !enabled;
+  }
+  function setComposerPaused(paused) {
+    messageInput.placeholder=paused?'請先點選上方項目再繼續操作':'告訴我你想做什麼';
+    sendButton.classList.toggle('is-paused',paused);
+    setComposerEnabled(false);
+  }
+  function prepareMessage(text,sentAt,onSend,statusText) {
+    messageInput.value=text;
+    pendingSend={sentAt,onSend};
+    setComposerEnabled(true);
+    status.textContent=statusText;
+    scroll();
+  }
+  function schedule(fn,delay,token) { const id = setTimeout(() => { if(alive(token)) fn(); },delay);timers.push(id); }
+  function avatar() {
+    const node=el('div','assistant-avatar');
+    node.setAttribute('role','img');node.setAttribute('aria-label','阿發');node.dataset.component='img/Alpha/32x32';
+    const face=el('img','mascot-face');face.src='assets/mascot-face.png';face.alt='';node.append(face);
+    const pos=el('span','avatar-star-position'),ins=el('span','avatar-star-inset'),star=el('img','mascot-star');
+    star.src='assets/mascot-star.svg';star.alt='';ins.append(star);pos.append(ins);node.append(pos);return node;
+  }
+  function userMessage(text='我想申請班機延誤理賠',sentAt='10:07 PM') {
+    const row=el('div','chat-user-row'),bubble=el('div','chat-user-bubble',text),time=el('p','chat-time',`${sentAt} 送出`);
+    row.append(bubble,time);chat.append(row);ensureScrollSpacer();scrollAnchor=row;resetChatToAnchor(row);
+    return row;
+  }
+  function assistantRow(sentAt='10:07 PM') {
+    const row=el('div','assistant-row'),column=el('div','assistant-content');
+    const meta=el('div','chat-meta');meta.append(el('p','chat-time',`${sentAt} 送出`));
+    row.append(avatar(),column);chat.append(row);ensureScrollSpacer();
+    return {row,column,meta};
+  }
+  // Same structure and Chinese copy as dist/app.js appendClaimDetails().
+  function details() {
+    const bubble=el('div','assistant-bubble claim-details-bubble');
+    const body=el('div');body.append(el('p','claim-card-heading','班機延誤理賠注意事項'));
+    const list=el('ol'),applicable=el('li');
+    applicable.append('本服務僅適用班機延誤後仍搭乘原航班。以下情況請改由產險官網或線下通路辦理：');
+    const subs=el('ol');subs.type='a';
+    ['班機取消/改搭其他班機','錯過轉機航班','同時申請其他理賠項目'].forEach(s=>subs.append(el('li',null,s)));
+    applicable.append(subs);list.append(applicable);
+    ['限個人件，且要保人與被保險人須為同一人','須為班機延誤發生後二年內提出','須為國泰產險會員'].forEach(s=>list.append(el('li',null,s)));
+    body.append(list);bubble.append(body);return {bubble,body};
+  }
+  function card() {
+    const wrapper=el('div','assistant-card info-confirm-card'),heading=el('p','prep-title','申請前請準備：'),list=el('ol','prep-list');
+    list.type='a';['登機證','本人匯款帳戶','班機延誤證明（視情況）'].forEach(s=>list.append(el('li',null,s)));
+    const actions=el('div','info-confirm-actions');
+    [['確認申請','claim-confirm'],['前往國泰產險官網','claim-website']].forEach(([label,action])=>{
+      const btn=el('button','chat-action',label);btn.type='button';btn.dataset.chatAction=action;
+      btn.addEventListener('click',()=>{const message=wrapper.querySelector('[data-test-feedback]')||el('p','');message.dataset.testFeedback='true';message.style.cssText='margin:7px 14px 9px;color:#4f44c3;font-size:12px';message.textContent=`已選取「${label}」（僅供展示）`;wrapper.append(message);scroll();});actions.append(btn);
+    });
+    wrapper.append(heading,list,actions);return wrapper;
+  }
+  function bankReviewCard() {
+    const reviewCard=el('div','assistant-card info-confirm-card'),heading=el('p','prep-title','匯款帳戶需求'),list=el('ol','prep-list');
+    list.type='a';['申請人本人名義的帳戶','確認銀行及帳號資料正確','依申請頁面指示提供帳戶資訊'].forEach(item=>list.append(el('li',null,item)));
+    reviewCard.append(heading,list);return reviewCard;
+  }
+  function loading() {
+    const row=el('div','message-loading');
+    row.dataset.component='Message/Loading';row.dataset.nodeId='32124:25069';
+    const content=el('div','message-loading-content'),bubble=el('div','message-loading-bubble');
+    const spark=el('span','message-loading-spark-spin');spark.setAttribute('aria-hidden','true');
+    const sparkImage=el('img','message-loading-spark');sparkImage.src='assets/loading-star.svg';sparkImage.alt='';
+    const word=el('span','message-loading-label',LOADING_TEXTS[0]);
+    spark.append(sparkImage);bubble.append(spark,word);content.append(bubble);row.append(avatar(),content);
+    return {row,word,bubble};
+  }
+  function animateLoading(waiting,token,durationMs) {
+    const switchTimes=[4000,7000,10000,13000,17000];
+    const fadeMs=Math.max(1,Math.round(durationMs*.01));
+    waiting.bubble.style.setProperty('--loading-fade-duration',`${fadeMs}ms`);
+    LOADING_TEXTS.slice(1).forEach((phrase,index)=>{
+      const switchAt=switchTimes[index];
+      if(switchAt>durationMs)return;
+      schedule(()=>{
+        waiting.bubble.classList.add('loading-fade-out');
+      },Math.max(0,switchAt-fadeMs),token);
+      schedule(()=>{
+        waiting.word.textContent=phrase;
+        waiting.bubble.classList.remove('loading-fade-out');
+        scroll();
+      },switchAt,token);
+    });
+  }
+  function showThinkingAnimation(token,kind,onComplete) {
+    const waitMs=getWaitMs(kind);
+    const waiting=loading();
+    chat.append(waiting.row);
+    ensureScrollSpacer();
+    animateLoading(waiting,token,Math.min(waitMs,LOADING_ANIMATION_MS));
+    status.textContent=`${WAIT_KIND_LABEL[kind]}：思考中，${formatWait(waitMs)}後${kind==='flow'&&!flowStream?'直接吐出':MODE_REPLY_LABEL[mode]}`;scroll();
+    schedule(()=>{
+      waiting.row.remove();scroll();
+      if(onComplete)onComplete();
+    },waitMs,token);
+  }
+  // 逐步顯示清單時，清單項目先隱藏，輪到該項文字開始出現才顯示，避免編號（1. 2. a. b.）提早出現。
+  function hideListItems(root) {
+    root.querySelectorAll('li').forEach(li=>li.classList.add('reveal-pending'));
+  }
+  function showListAncestors(node,root) {
+    for(let e=node.parentElement;e&&e!==root;e=e.parentElement){
+      if(e.tagName==='LI')e.classList.remove('reveal-pending');
+    }
+  }
+  // 把文字切成揭示單位，切完的片段串起來必須等於原文（排版與一次顯示完全一致）。
+  function splitForReveal(text,unit) {
+    if(unit==='word'){
+      return wordSegmenter?Array.from(wordSegmenter.segment(text),part=>part.segment):Array.from(text);
+    }
+    const parts=text.includes('\n')?text.split(/(?<=\n)/):text.split(/(?<=[。；！？])/);
+    return parts.filter(Boolean);
+  }
+  // F 逐詞淡入、G 每段（每行或每句）模糊轉清晰。
+  function revealText(holder,text,style,token,onComplete) {
+    const parts=splitForReveal(text,style==='fade'?'word':'block');
+    const cls=style==='fade'?'reveal-fade':'reveal-blur';
+    let index=0;
+    const run=()=>{
+      if(!alive(token))return;
+      if(index>=parts.length){if(onComplete)onComplete();return;}
+      const part=parts[index++];
+      holder.append(el('span',cls,part));scroll();
+      schedule(run,style==='fade'?FADE_CHAR_MS*Array.from(part).length:BLUR_GAP_MS,token);
+    };
+    run();
+  }
+  // 結構化訊息（標題＋清單）：G 以標題與每個清單項目為一段；F 依序逐詞淡入所有文字。
+  function revealStructured(root,style,token,onComplete) {
+    if(style==='fade'){
+      const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),entries=[];
+      while(walker.nextNode()){
+        const node=walker.currentNode;
+        if(node.nodeValue)entries.push(node);
+      }
+      const holders=entries.map(node=>{const holder=el('span');const value=node.nodeValue;node.replaceWith(holder);return {holder,value};});
+      hideListItems(root);
+      let index=0;
+      const next=()=>{
+        if(index>=holders.length){if(onComplete)onComplete();return;}
+        const item=holders[index++];showListAncestors(item.holder,root);revealText(item.holder,item.value,'fade',token,next);
+      };
+      next();
+      return;
+    }
+    const blocks=Array.from(root.querySelectorAll('.claim-card-heading, li'));
+    blocks.forEach(block=>block.classList.add('reveal-pending'));
+    let index=0;
+    const run=()=>{
+      if(!alive(token))return;
+      if(index>=blocks.length){if(onComplete)onComplete();return;}
+      const block=blocks[index++];
+      block.classList.remove('reveal-pending');
+      block.classList.add('reveal-blur');
+      scroll();
+      schedule(run,BLUR_GAP_MS,token);
+    };
+    run();
+  }
+  // 依樣式呈現文字：F／G 逐步揭示；H、I 一次放入（I 的模糊由整則外層負責）。
+  function presentText(paragraph,text,style,token,onComplete) {
+    if(style==='fade'||style==='blur'){revealText(paragraph,text,style,token,onComplete);return;}
+    paragraph.append(text);scroll();if(onComplete)onComplete();
+  }
+  function presentStructured(root,style,token,onComplete) {
+    if(style==='fade'||style==='blur'){revealStructured(root,style,token,onComplete);return;}
+    scroll();if(onComplete)onComplete();
+  }
+  // 原則：只有文字泡泡會 Streaming；卡片、快速回覆、時間／讚、你可能想問等其他元件一律直接呈現（訊息文字揭示完成後才出現）。
+  // I 整則模糊時，這些元件跟著整則外層一起模糊轉清晰。
+  function appendBlock(parent,node) { parent.append(node); }
+  // 流程回合泡泡文字的呈現：「流程 Streaming」為否時，逐步揭示（F／G）改為直接吐出；牌卡仍依 style 整張出現。
+  function flowTextStyle(style) { return !flowStream&&(style==='fade'||style==='blur')?'instant':style; }
+  // 新增一則阿發回覆；I（blurAll）讓整則內容（訊息＋卡片）一起模糊轉清晰。
+  function replyRow(sentAt,style) {
+    const node=assistantRow(sentAt);
+    if(style==='blurAll')node.column.classList.add('reveal-blur');
+    return node;
+  }
+  // 單則文字回覆；finish 在文字呈現完後補上卡片、時間等。
+  function textReply(sentAt,text,finish) {
+    return (style,token,done,partial)=>{
+      const node=replyRow(sentAt,style),bubble=el('div','assistant-bubble'),paragraph=el('p');
+      bubble.append(paragraph);node.column.append(bubble);
+      presentText(paragraph,text,style,token,()=>{if(partial)return;finish(node,paragraph,style);scroll();done();});
+      return {node,chars:Array.from(text).length,direct:false};
+    };
+  }
+  const appendMeta=node=>node.column.append(node.meta);
+  // 一則阿發回覆：思考中 → 依 style 呈現。
+  // 若「下一則訊息 Error」為「是」：先以 F 逐詞淡入（流程 Streaming 為否時，流程泡泡文字直接吐出），
+  // 出現到一半時整則收回、回到思考中，再以 Error 樣式給出完整回覆。前半段不會出現牌卡。
+  // render(style,token,done,partial) 建立並呈現這則回覆，回傳 {node,chars,direct}。
+  function respond(token,kind,style,render,afterReply) {
+    // 從思考中到回覆完成，輸入列都是停用態（Input/MessageBar Status=pause）。
+    setComposerPaused(true);
+    const onDone=()=>{setComposerPaused(false);afterReply();};
+    showThinkingAnimation(token,kind,()=>{
+      if(!errorNext){render(style,token,onDone);return;}
+      const finalStyle=errorStyle;
+      const partial={parent:token,dead:false};
+      const {node,chars,direct,holdMs}=render('fade',partial,()=>{},true);
+      status.textContent=direct?'Error：泡泡文字直接吐出，即將收回':'Error：逐詞淡入中，即將收回';
+      schedule(()=>{
+        partial.dead=true;node.row.remove();scroll();
+        showThinkingAnimation(token,kind,()=>render(finalStyle,token,onDone));
+        status.textContent=`Error：回覆已收回，重新思考後以「${STYLE_LABEL[finalStyle]}」呈現`;
+      },holdMs??(direct?ERROR_DIRECT_HOLD_MS:Math.round(chars*FADE_CHAR_MS/2)),token);
+    });
+  }
+  function resetChatToAnchor(anchor=scrollAnchor) {
+    ensureScrollSpacer();
+    followLatest=false;programmaticScroll=true;clearTimeout(programmaticScrollTimer);
+    const target=anchor?.isConnected?anchor:null;
+    if(target){
+      const chatTop=chat.getBoundingClientRect().top;
+      const anchorTop=target.getBoundingClientRect().top;
+      chat.scrollTop=Math.max(0,chat.scrollTop+anchorTop-chatTop);
+    }else chat.scrollTop=0;
+    requestAnimationFrame(()=>{programmaticScroll=false;updateScrollButton();});
+  }
+  function appendContactLines(paragraph,item) {
+    if(item.phone){
+      const line=el('span','claim-contact-line');line.append('客服電話：');
+      const link=el('a','claim-support-link',item.phone);link.href=`tel:${item.phone.replace(/-/g,'')}`;
+      const externalIcon=el('img');externalIcon.src='assets/external-link.svg';externalIcon.alt='';link.append(externalIcon);line.append(link);paragraph.append(line);
+    }
+    if(item.landline){
+      const line=el('span','claim-contact-line');line.append('市話請撥：');
+      const link=el('a','claim-support-link',item.landline);link.href=`tel:${item.landline.replace(/-/g,'')}`;line.append(link);paragraph.append(line);
+    }
+  }
+  // 劇本：1 諮詢 → 2 申請（流程）→ 3 匯款帳戶（流程）→ 4 追問（諮詢）→ 5 延誤時間（諮詢＋快速回覆）→ 6 快速回覆的回答（諮詢）。
+  function startConsultation(token) {
+    userMessage(FIRST_CONSULTATION.user,FIRST_CONSULTATION.sentAt);
+    respond(token,'consult',mode,textReply(FIRST_CONSULTATION.sentAt,FIRST_CONSULTATION.answer,appendMeta),()=>{
+      prepareMessage(APPLICATION_MESSAGE,'10:08 PM',()=>continueFlow(token),'已預填申請訊息，請點選傳送');
+    });
+  }
+  function applicationReply(style,token,done,partial) {
+    const node=replyRow('10:09 PM',style),{bubble}=details(),textStyle=flowTextStyle(style);
+    const chars=Array.from(bubble.textContent).length;
+    node.column.append(bubble);
+    presentStructured(bubble,textStyle,token,()=>{
+      if(partial)return;
+      appendBlock(node.column,card());appendMeta(node);status.textContent='流程：申請流程回覆完成';scroll();done();
+    });
+    return {node,chars,direct:textStyle==='instant'};
+  }
+  function bankReply(style,token,done,partial) {
+    const node=replyRow('10:10 PM',style),bubble=el('div','assistant-bubble'),paragraph=el('p'),textStyle=flowTextStyle(style);
+    bubble.append(paragraph);node.column.append(bubble);
+    presentText(paragraph,BANK_ACCOUNT_ANSWER,textStyle,token,()=>{
+      if(partial)return;
+      appendBlock(node.column,bankReviewCard());appendMeta(node);scroll();done();
+    });
+    return {node,chars:Array.from(BANK_ACCOUNT_ANSWER).length,direct:textStyle==='instant'};
+  }
+  function continueFlow(token) {
+    respond(token,'flow',mode,applicationReply,()=>{
+      prepareMessage(BANK_ACCOUNT_QUESTION,'10:10 PM',()=>{
+        respond(token,'flow',mode,bankReply,()=>schedule(()=>prepareFollowup(token),FLOW_PREVIEW_PAUSE_MS,token));
+      },'已預填匯款帳戶問題，請點選傳送');
+    });
+  }
+  function prepareFollowup(token) {
+    prepareMessage(FOLLOWUP_CONSULTATION.user,FOLLOWUP_CONSULTATION.sentAt,()=>{
+      respond(token,'consult',mode,textReply(FOLLOWUP_CONSULTATION.sentAt,FOLLOWUP_CONSULTATION.answer,appendMeta),()=>prepareFourthUserMessage(token));
+    },'已預填後續問題，請點選傳送');
+  }
+  function prepareFourthUserMessage(token) {
+    prepareMessage(FOURTH_USER_PROMPT,'10:11 PM',()=>showFourthAnswer(token),'已預填追問，請點選傳送');
+  }
+  function showFourthAnswer(token) {
+    respond(token,'consult',mode,textReply('10:11 PM',FOURTH_ASSISTANT_ANSWER,(node,paragraph,style)=>{
+      appendMeta(node);
+      const actions=el('div','chat-actions figma-quick-replies');
+      Object.keys(FIFTH_ANSWERS).forEach(label=>{
+        const button=el('button','chat-action afa-figma-button',label);button.type='button';
+        button.addEventListener('click',()=>{
+          actions.querySelectorAll('button').forEach(option=>option.disabled=true);
+          setComposerPaused(false);
+          userMessage(label,'10:11 PM');followLatest=false;
+          showFifthAnswer(FIFTH_ANSWERS[label],token);
+        });
+        actions.append(button);
+      });
+      appendBlock(node.column,actions);status.textContent='請選擇後續處理方式';
+    }),()=>setComposerPaused(true));
+  }
+  function showFifthAnswer(item,token) {
+    respond(token,'consult',mode,textReply('10:12 PM',item.answer,(node,paragraph)=>{appendContactLines(paragraph,item);appendMeta(node);}),()=>{status.textContent='諮詢完成';});
+  }
+  // 新情境測試（查帳單）：一問多則（流程）——泡泡 → 帳單卡 → 提醒泡泡（含連結）→ 時間／讚 → 你可能想問。
+  function demoFeedback(parent,label,cls='bill-note') {
+    const message=parent.querySelector('[data-test-feedback]')||el('p',cls);
+    message.dataset.testFeedback='true';message.textContent=`已選取「${label}」（僅供展示）`;parent.append(message);scroll();
+  }
+  function img(src,cls) { const node=el('img',cls);node.src=src;node.alt='';return node; }
+  function billCard() {
+    const wrapper=el('div','bill-card'),statement=el('div','bill-statement');
+    const total=el('div','bill-total');total.append(el('p','bill-total-label',BILL.totalLabel),el('p','bill-total-amount',BILL.total));
+    statement.append(total);
+    BILL.rows.forEach(([label,value,strong])=>{const row=el('p',strong?'bill-row is-strong':'bill-row');row.append(el('span',null,label),el('span',null,value));statement.append(row);});
+    wrapper.append(statement);return wrapper;
+  }
+  function billMeta(sentAt) {
+    const meta=el('div','bill-meta'),feedback=el('div','bill-feedback');
+    [['讚','assets/ic-thumb-up.svg'],['倒讚','assets/ic-thumb-down.svg']].forEach(([label,src])=>{
+      const button=el('button');button.type='button';button.setAttribute('aria-label',label);button.setAttribute('aria-pressed','false');button.append(img(src));
+      button.addEventListener('click',()=>{const on=button.getAttribute('aria-pressed')!=='true';feedback.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed','false'));button.setAttribute('aria-pressed',String(on));});
+      feedback.append(button);
+    });
+    meta.append(el('p','chat-time',`${sentAt} 送出`),feedback);return meta;
+  }
+  function billSuggestions() {
+    const box=el('div','bill-suggest'),heading=el('p','bill-suggest-heading'),star=el('span','bill-suggest-star');
+    star.append(img('assets/suggest-star.svg'));heading.append(star,'你可能想問');box.append(heading);
+    BILL.suggestions.forEach((label,index)=>{
+      const button=el('button','bill-suggest-q',label);button.type='button';
+      button.append(img(index===0?'assets/ic-arrow-grey.svg':'assets/ic-arrow-grey-s.svg'));
+      button.addEventListener('click',()=>demoFeedback(box,label));box.append(button);
+    });
+    return box;
+  }
+  function billReply(style,token,done,partial) {
+    const node=replyRow(BILL.sentAt,style),textStyle=flowTextStyle(style);
+    node.column.classList.add('bill-reply');
+    const intro=el('div','assistant-bubble'),introText=el('p');intro.append(introText);node.column.append(intro);
+    presentText(introText,BILL.intro,textStyle,token,()=>{
+      if(partial)return;
+      appendBlock(node.column,billCard());
+      const reminder=el('div','assistant-bubble'),reminderText=el('p');reminder.append(reminderText);node.column.append(reminder);
+      presentText(reminderText,BILL.reminder,textStyle,token,()=>{
+        const link=el('a','bill-link',BILL.linkLabel);link.href='#';
+        link.addEventListener('click',event=>{event.preventDefault();demoFeedback(reminder,BILL.linkLabel,'');});
+        if(textStyle==='fade')link.classList.add('reveal-fade');else if(textStyle==='blur')link.classList.add('reveal-blur');
+        reminderText.append(link);
+        appendBlock(node.column,billMeta(BILL.sentAt));
+        appendBlock(node.column,billSuggestions());
+        status.textContent='流程：查帳單回覆完成';scroll();done();
+      });
+    });
+    // Error 時第一個泡泡讓它完整出現後停留 1 秒再收回（帳單卡尚未出現）。
+    const chars=Array.from(BILL.intro).length;
+    return {node,chars,direct:textStyle==='instant',holdMs:textStyle==='instant'?ERROR_DIRECT_HOLD_MS:chars*FADE_CHAR_MS+ERROR_DIRECT_HOLD_MS};
+  }
+  function startBill(token) {
+    userMessage(BILL.user,BILL.sentAt);
+    respond(token,'flow',mode,billReply,()=>{});
+  }
+  function start() {
+    generation++;const token={gen:generation};
+    timers.forEach(clearTimeout);timers=[];
+    pendingSend=null;chat.replaceChildren();
+    scrollSpacer=null;followLatest=false;scrollAnchor=null;programmaticScroll=false;clearTimeout(programmaticScrollTimer);scrollLatest.hidden=true;
+    messageInput.value='';setComposerPaused(false);
+    status.textContent='諮詢內容 Streaming 中';
+    if(scenario==='bill')startBill(token);else startConsultation(token);
+  }
+  composerForm.addEventListener('submit',event=>{
+    event.preventDefault();
+    const next=pendingSend;
+    const message=messageInput.value.trim();
+    if(!next||!message)return;
+    pendingSend=null;setComposerEnabled(false);
+    userMessage(message,next.sentAt);followLatest=false;
+    messageInput.value='';
+    status.textContent='正在接續申請流程';scroll();
+    next.onSend(message);
+  });
+  chat.addEventListener('scroll',()=>{
+    const distanceToBottom=latestScrollTop()-chat.scrollTop;
+    if(distanceToBottom<=40){if(!programmaticScroll&&latestScrollTop()>40)followLatest=true;}
+    else if(!programmaticScroll)followLatest=false;
+    updateScrollButton();
+  },{passive:true});
+  chat.addEventListener('scrollend',()=>{programmaticScroll=false;},{passive:true});
+  scrollLatest.addEventListener('click',()=>{
+    followLatest=true;programmaticScroll=true;
+    chat.scrollTo({top:latestScrollTop(),behavior:'smooth'});
+    clearTimeout(programmaticScrollTimer);
+    programmaticScrollTimer=setTimeout(()=>{programmaticScroll=false;updateScrollButton();},1200);
+  });
+  waitButtons.forEach(button=>button.addEventListener('click',()=>{selectedWaitIndex[button.dataset.waitKind]=Number(button.dataset.waitIndex);updateWaitValue();}));
+  confirmWaitButton.addEventListener('click',()=>{Object.assign(activeWaitIndex,selectedWaitIndex);syncPresetButtons();start();});
+  // Error 設定立即生效，不需要按「確認」，也不會重播。
+  errorNextButtons.forEach(button=>button.addEventListener('click',()=>setErrorNext(button.dataset.errorNext==='on')));
+  presetButtons.forEach(button=>button.addEventListener('click',()=>applyPreset(button.dataset.preset)));
+  updateWaitValue();
+  $('#replay').addEventListener('click',start);
+  start();
+})();
+</script>
+</body>
+</html>
