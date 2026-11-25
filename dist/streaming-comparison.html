@@ -142,6 +142,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:flex-
 <div class="compare-bar" aria-label="選擇預設樣式">
 <button type="button" class="compare-choice" data-preset="1" aria-pressed="false" title="班機延誤劇本｜Error 後以逐詞淡入重新呈現">Streaming 示範 1<small>Error：逐詞淡入</small></button>
 <button type="button" class="compare-choice" data-preset="2" aria-pressed="true" title="班機延誤劇本｜Error 後整則模糊轉清晰">Streaming 示範 2<small>Error：整則模糊</small></button>
+<button type="button" class="compare-choice" data-preset="4" aria-pressed="false" title="班機延誤劇本｜Error 後直接顯示錯誤訊息，可重新傳送">Streaming 示範 3<small>Error：錯誤訊息</small></button>
 <button type="button" class="compare-choice" data-preset="3" aria-pressed="false" title="查帳單劇本｜Error 後整則模糊轉清晰">複雜情境演示<small>查帳單</small></button>
 <button type="button" class="compare-replay" id="replay" aria-label="重新播放">↻ 重播</button>
 </div>
@@ -221,7 +222,10 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:flex-
   // 下一則訊息 Error：為「是」時，每則阿發回覆先以 F 逐詞淡入，出現到一半時整則收回、回到思考中，
   // 再以所選 Error 樣式給出完整回覆。不會自動改回「否」。
   // 呈現樣式（style）：fade＝F 逐詞淡入；blur＝G 逐段模糊轉清晰；instant＝H 直接呈現；blurAll＝I 整則一起模糊轉清晰。
-  const STYLE_LABEL = {fade:'F 逐詞淡入',blur:'G 逐段模糊',instant:'H 直接呈現',blurAll:'I 整則模糊'};
+  const STYLE_LABEL = {fade:'F 逐詞淡入',blur:'G 逐段模糊',instant:'H 直接呈現',blurAll:'I 整則模糊',errorMessage:'錯誤訊息'};
+  // errorMessage：收回後不重新思考，阿發直接顯示這段錯誤訊息，並預填剛才的使用者訊息供重新傳送。
+  const ERROR_MESSAGE = '抱歉目前的系統服務異常，請重新發送訊息或再試一次。';
+  let lastUserMessage = null; // {text,sentAt}：Error 後重新傳送用
   let errorNext = false; // 廠商展示版預設「否」；完全手動，上方按鈕、重播、確認都不會改
   let errorStyle = 'blurAll'; // 預設 I 整則模糊
   // 流程 Streaming：只影響流程回合牌卡前的泡泡文字。true＝逐字吐出（F）；false＝直接吐出。牌卡一律整張出現。
@@ -233,6 +237,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:flex-
   const PRESETS = {
     1:{scenario:'flight',errorStyle:'fade',flowStream:true},
     2:{scenario:'flight',errorStyle:'blurAll',flowStream:true},
+    4:{scenario:'flight',errorStyle:'errorMessage',flowStream:true},
     3:{scenario:'bill',errorStyle:'blurAll',flowStream:true}
   };
   // 查帳單情境：文案與數字皆為展示用範例。
@@ -351,6 +356,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:flex-
   function userMessage(text='我想申請班機延誤理賠',sentAt='10:07 PM') {
     const row=el('div','chat-user-row'),bubble=el('div','chat-user-bubble',text),time=el('p','chat-time',`${sentAt} 送出`);
     row.append(bubble,time);chat.append(row);ensureScrollSpacer();scrollAnchor=row;resetChatToAnchor(row);
+    lastUserMessage={text,sentAt};
     return row;
   }
   function assistantRow(sentAt='10:07 PM') {
@@ -534,10 +540,20 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:flex-
       status.textContent=direct?'Error：泡泡文字直接吐出，即將收回':'Error：逐詞淡入中，即將收回';
       schedule(()=>{
         partial.dead=true;node.row.remove();scroll();
+        if(finalStyle==='errorMessage'){showErrorMessage(()=>respond(token,kind,style,render,afterReply));return;}
         showThinkingAnimation(token,kind,()=>render(finalStyle,token,onDone));
         status.textContent=`Error：回覆已收回，重新思考後以「${STYLE_LABEL[finalStyle]}」呈現`;
       },holdMs??(direct?ERROR_DIRECT_HOLD_MS:Math.round(chars*FADE_CHAR_MS/2)),token);
     });
+  }
+  // Error 樣式「錯誤訊息」：收回後直接顯示錯誤訊息泡泡（不淡入），再預填剛才的使用者訊息；傳送後重跑同一回合。
+  function showErrorMessage(retry) {
+    const sentAt=lastUserMessage?.sentAt??'10:07 PM';
+    const node=assistantRow(sentAt),bubble=el('div','assistant-bubble');
+    bubble.append(el('p',null,ERROR_MESSAGE));node.column.append(bubble);appendMeta(node);scroll();
+    setComposerPaused(false);
+    if(lastUserMessage)prepareMessage(lastUserMessage.text,sentAt,retry,'Error：已顯示錯誤訊息，可點選傳送重新發送');
+    else status.textContent='Error：已顯示錯誤訊息';
   }
   function resetChatToAnchor(anchor=scrollAnchor) {
     ensureScrollSpacer();
