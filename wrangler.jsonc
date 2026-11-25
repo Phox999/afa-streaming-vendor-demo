@@ -1,0 +1,9 @@
+{
+  // 純靜態網站：Cloudflare Worker 直接提供 dist/ 內的檔案。
+  // GitHub push 到 main 後由 Cloudflare Workers Builds 執行 `npx wrangler deploy` 自動部署。
+  "name": "streaming-example-vendor-demo",
+  "compatibility_date": "2025-01-01",
+  "assets": {
+    "directory": "./dist"
+  }
+}

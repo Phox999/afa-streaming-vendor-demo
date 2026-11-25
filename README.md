@@ -100,6 +100,14 @@ npx serve dist
 
 或直接用瀏覽器開啟 `dist/index.html`。
 
+## 部署
+
+部署在 Cloudflare Worker `streaming-example-vendor-demo`（純靜態，設定在 `wrangler.jsonc`）。已連接 Cloudflare Workers Builds：push 到 `main` 會自動執行 `npx wrangler deploy` 部署 `dist/`。需要手動部署時，在 repo 根目錄執行：
+
+```bash
+npx wrangler deploy
+```
+
 ## 注意
 
 - 理賠條件、期限、客服電話等文案僅供 Prototype 展示，對外使用前須以國泰產險官網與保單條款核對。
